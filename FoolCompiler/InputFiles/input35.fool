@@ -1,0 +1,8 @@
+﻿let 
+    int power(int n) {
+        n*n;
+	};
+in
+power(-2);
+
+//4

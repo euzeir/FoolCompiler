@@ -1,0 +1,12 @@
+﻿class A{
+    int prodotto(int a, int b) {
+        a*b;
+    }
+};
+let
+    bool b = true;
+    A a = new A();
+in
+    a.prodotto(1,b);
+
+//Main: Error: Wrong type for the parameter b inside the invocation of the method prodotto

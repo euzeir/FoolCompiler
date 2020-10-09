@@ -1,0 +1,7 @@
+﻿let
+    int x  = 1;
+
+in
+    x.f();
+
+//Error

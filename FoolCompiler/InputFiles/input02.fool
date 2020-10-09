@@ -1,0 +1,3 @@
+﻿if ((1 + 2 + 1) > 3) then {true;} else {false;};
+
+//True

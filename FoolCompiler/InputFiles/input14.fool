@@ -1,0 +1,6 @@
+﻿let
+    int x = null;
+in
+    x;
+
+//Main: Error: Incompatible value for variable [x]

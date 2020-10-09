@@ -1,0 +1,12 @@
+﻿let
+   bool f(int x) {
+          if (x == x)
+          then { true;}
+          else { not true; };
+       };
+
+ in
+    f(4);
+
+
+ // 1

@@ -1,0 +1,12 @@
+﻿let 
+	int f(int a, int b) 
+	{
+		let 
+			int x = 3 + a
+		in 
+			x + b;
+	};
+in 
+	f(1, 1);
+
+//5

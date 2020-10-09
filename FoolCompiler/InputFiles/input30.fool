@@ -1,0 +1,17 @@
+﻿class Z;
+class A extends Z;
+class B extends A;
+class C extends A ;
+let
+    C f(A a, A b, A c){
+        new A();
+    };
+    A a = new A();
+    B b = new B();
+    C c = new C();
+    Z z = new Z();
+
+in
+    f(a,b,c);
+
+//Main: Error: Incompatible type returned from function f.
