@@ -20,11 +20,10 @@ namespace FoolCompiler.TypeDefinition
 
         public bool IsSubType(IFoolType type)
         {
-            bool res = false;
             if (type is FoolFunctionType)
             {
                 FoolFunctionType functionType = (FoolFunctionType)type;
-                res = true;
+                bool res = true;
                 if (_parameters.Count == functionType.GetParameters().Count)
                 {
                     for (int i = 0; i <= _parameters.Count; i++)
@@ -42,8 +41,7 @@ namespace FoolCompiler.TypeDefinition
             }
             else
             {
-                res = false;
-                return res;
+                return false;
             }
         }
 

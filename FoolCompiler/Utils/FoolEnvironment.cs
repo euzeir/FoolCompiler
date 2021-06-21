@@ -11,22 +11,22 @@ namespace FoolCompiler.Utils
         private SymbolTableEntry _lastEntry = null;
         private int _offset = 0;
 
-        public List<Dictionary<string, SymbolTableEntry>> GetSymbolTable()
-        {
-            return _symbolTable;
-        }
-        public void SetSymbolTable(List<Dictionary<string, SymbolTableEntry>> symbolTable)
-        {
-            _symbolTable = symbolTable;
-        }
+        //public List<Dictionary<string, SymbolTableEntry>> GetSymbolTable()
+        //{
+        //    return _symbolTable;
+        //}
+        //public void SetSymbolTable(List<Dictionary<string, SymbolTableEntry>> symbolTable)
+        //{
+        //    _symbolTable = symbolTable;
+        //}
         public int GetOffset()
         {
             return _offset;
         }
-        public void IncrementOffset()
-        {
-            _offset++;
-        }
+        //public void IncrementOffset()
+        //{
+        //    _offset++;
+        //}
         public void DecrementOffset()
         {
             _offset--;
@@ -51,50 +51,38 @@ namespace FoolCompiler.Utils
         }
         public void RemoveScope()
         {
-            var nestLevel = GetNestingLevel();
-            _symbolTable.RemoveAt(nestLevel);
+            _symbolTable.RemoveAt(GetNestingLevel());
         }
 
         public FoolEnvironment InsertDeclaration(string declarationName, IFoolType fType, int offset)
         {
-            try
-            {
-                SymbolTableEntry entry = new SymbolTableEntry(GetNestingLevel(), fType, offset);
+            int nestingLevel = GetNestingLevel();
+            SymbolTableEntry entry = new SymbolTableEntry(nestingLevel, fType, offset);
 
-                if (_symbolTable[GetNestingLevel()].ContainsKey(declarationName))
-                {
-                    throw new MultipleNameDeclarationErrorException(declarationName);
-                }
-                if (fType is FoolClassType)
-                {
-                    _lastEntry = entry;
-                }
-                _symbolTable[GetNestingLevel()].Add(declarationName, entry);
-            }
-            catch(FoolParserException e)
+            if (_symbolTable[nestingLevel].ContainsKey(declarationName))
             {
-                Console.WriteLine("Oops...a Parser Error has occured! {0}", e);
+                throw new MultipleNameDeclarationErrorException(declarationName);
             }
+            if (fType is FoolClassType)
+            {
+                _lastEntry = entry;
+            }
+            _symbolTable[nestingLevel].Add(declarationName, entry);
             return this;
         }
         public FoolEnvironment SetDeclarationType(string declarationName, IFoolType fType, int offset)
         {
-            try
+            int nestingLevel = GetNestingLevel();
+            SymbolTableEntry newEntry = new SymbolTableEntry(nestingLevel, fType, offset);
+            SymbolTableEntry oldEntry = _symbolTable[nestingLevel][declarationName] = newEntry;
+
+            if (fType is FoolClassType)
             {
-                SymbolTableEntry newEntry = new SymbolTableEntry(GetNestingLevel(), fType, offset);
-                SymbolTableEntry oldEntry = _symbolTable[GetNestingLevel()][declarationName] = newEntry;
-                if (fType is FoolClassType)
-                {
-                    _lastEntry = newEntry;
-                }
-                if (oldEntry == null)
-                {
-                    throw new NotDeclaredNameErrorException(declarationName);
-                }
+                _lastEntry = newEntry;
             }
-            catch(FoolParserException e)
+            if (oldEntry == null)
             {
-                Console.WriteLine("Oops...a Parser Error has occured! {0}", e);
+                throw new NotDeclaredNameErrorException(declarationName);
             }
             return this;
         }
@@ -122,36 +110,66 @@ namespace FoolCompiler.Utils
 
         public SymbolTableEntry CheckDeclaredName(string declaredName)
         {
-            int max = _symbolTable.Count - 1;
-
-            while (_symbolTable[max] != null)
+            foreach (var item in _symbolTable)
             {
-                Dictionary<string, SymbolTableEntry> currentElement = _symbolTable[max];
-                if (currentElement.ContainsKey(declaredName))
+                Dictionary<string, SymbolTableEntry> currentElement = item;
+                if(currentElement.ContainsKey(declaredName))
                 {
                     return currentElement[declaredName];
                 }
-                max--;
-                if (max == -1) break;
             }
+            //IEnumerator<Dictionary<string, SymbolTableEntry>> enumerator = _symbolTable.GetEnumerator();
+            //enumerator.Reset();
+
+            //while (enumerator.MoveNext())
+            //{
+            //    Dictionary<string, SymbolTableEntry> currentElement = enumerator.Current;
+            //    if (currentElement.ContainsKey(declaredName))
+            //    {
+            //        return currentElement[declaredName];
+            //    }
+            //}
 
             throw new NotDeclaredNameErrorException(declaredName);
         }
 
         public SymbolTableEntry ControlFunction(string declaredName)
         {
-            int max = _symbolTable.Count - 1;
-
-            while (_symbolTable[max] != null)
+            foreach (var item in _symbolTable)
             {
-                Dictionary<string, SymbolTableEntry> currentElement = _symbolTable[max];
-                if ((currentElement.ContainsKey(declaredName)) && !(currentElement[declaredName].GetFoolType() is FoolFunctionType))
+                Dictionary<string, SymbolTableEntry> currentElement = item;
+                if(currentElement.ContainsKey(declaredName) && !(currentElement[declaredName].GetFoolType() is FoolFunctionType))
                 {
                     return currentElement[declaredName];
                 }
-                max--;
-                if (max == -1) break; 
             }
+            //_symbolTable.Reverse();
+            //IEnumerator<Dictionary<string, SymbolTableEntry>> enumerator = _symbolTable.GetEnumerator();
+            ////enumerator.Reset();
+            ////enumerator.MoveNext();
+
+            //while (enumerator.MoveNext())
+            //{
+            //    Dictionary<string, SymbolTableEntry> currentElement = enumerator.Current;
+            //    if (currentElement.ContainsKey(declaredName) && !(currentElement[declaredName].GetFoolType() is FoolFunctionType))
+            //    {
+            //        return currentElement[declaredName];
+            //    }
+            //}
+
+            //while (enumerator.MoveNext())
+            //{
+            //    Dictionary<string, SymbolTableEntry> currentElement = enumerator.Current;
+            //    if (currentElement.ContainsKey(declaredName) && !(currentElement[declaredName].GetFoolType() is FoolFunctionType))
+            //    {
+            //        return currentElement[declaredName];
+            //    }
+            //    //enumerator.MoveNext();
+            //    if (enumerator.Current == null)
+            //    {
+            //        break;
+            //    }
+            //}
 
             throw new NotDeclaredNameErrorException(declaredName);
         }

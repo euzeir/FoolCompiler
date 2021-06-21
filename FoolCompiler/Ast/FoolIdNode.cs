@@ -47,27 +47,28 @@ namespace FoolCompiler.Ast
 
         public string CodeGeneration()
         {
-            int i;
             string code = string.Empty;
-            StringBuilder GetAR = new StringBuilder();
+            StringBuilder getActivationRecord = new StringBuilder();
 
-            for (i = 0; i < _nestingLevel - _symbolTableEntry.GetNestingLevel(); i++)
-                GetAR.Append("lw\n");
+            for (int i = 0; i < _nestingLevel - _symbolTableEntry.GetNestingLevel(); i++)
+            {
+                getActivationRecord.Append("lw\n");
+            }
 
-            code = "push " +
-                _symbolTableEntry.GetOffset() +
-                "\n" +
-                "lfp\n" +
-                "add\n" +
-                "lw\n";
+            code = "push " 
+                + _symbolTableEntry.GetOffset()
+                + "\n"
+                + "lfp\n"
+                + getActivationRecord
+                + "add\n"
+                + "lw\n"
+                ;
 
             if (_isNegative)
             {
                 if (_isBoolean)
                 {
-                    code = "push 1\n" +
-                        code +
-                        "sub\n";
+                    code = "push 1\n" + code + "sub\n";
                 }
                 else
                 {

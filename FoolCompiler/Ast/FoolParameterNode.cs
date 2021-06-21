@@ -7,10 +7,10 @@ namespace FoolCompiler.Ast
 {
     public class FoolParameterNode : IFoolNode
     {
-        protected string _id;
-        protected IFoolType _foolType;
-        protected int _offset;
-        protected bool _isInsideClass;
+        private string _id;
+        private IFoolType _foolType;
+        private int _offset;
+        private bool _isInsideClass;
 
         public FoolParameterNode(string id, IFoolType foolType, int offset)
         {
@@ -55,7 +55,7 @@ namespace FoolCompiler.Ast
             }
             catch
             {
-                throw new FoolTypeException("Bad Type!");
+                throw new FoolTypeException("Oops... Bad Type!\n");
             }
         }
 

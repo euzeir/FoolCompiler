@@ -12,8 +12,7 @@
         }
         public static string CreateFreshFunctionLabel()
         {
-            _functionLabelCount++;
-            return "function" + _functionLabelCount;
+            return "function" + (_functionLabelCount++);
         }
         public static void PutCode(string c)
         {

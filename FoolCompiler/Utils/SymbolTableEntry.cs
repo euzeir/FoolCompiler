@@ -4,8 +4,8 @@ namespace FoolCompiler.Utils
 {
     public class SymbolTableEntry
     {
-        private IFoolType _foolType;
         private int _nestingLevel;
+        private IFoolType _foolType;
         private int _offset;
         private bool _isClass;
         private bool _isInitialized;

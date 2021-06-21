@@ -1,0 +1,12 @@
+﻿let
+   bool f(bool x) {
+          if (not x)
+          then { not false;}
+          else { not true; };
+       };
+
+ in
+    f(false);
+
+
+ // True

@@ -15,31 +15,31 @@ namespace FoolCompiler.Ast
             DIVISION
         };
 
-        private IFoolNode left;
-        private IFoolNode right;
-        private string operation;
+        private IFoolNode _left;
+        private IFoolNode _right;
+        private string _operation;
 
-        public FoolIntegerOperationsNode(IntegerOperationTypes ops, IFoolNode l, IFoolNode r)
+        public FoolIntegerOperationsNode(IntegerOperationTypes operation, IFoolNode left, IFoolNode right)
         {
-            left = l;
-            right = r;
+            _left = left;
+            _right = right;
 
-            switch(ops)
+            switch(operation)
             {
                 case IntegerOperationTypes.PLUS:
-                    operation = "add\n";
+                    _operation = "add\n";
                     break;
                 case IntegerOperationTypes.DIVISION:
-                    operation = "div\n";
+                    _operation = "div\n";
                     break;
                 case IntegerOperationTypes.MULT:
-                    operation = "mult\n";
+                    _operation = "mult\n";
                     break;
                 case IntegerOperationTypes.MINUS:
-                    operation = "sub\n";
+                    _operation = "sub\n";
                     break;
                 default:
-                    Console.WriteLine("Oops... There is not defined such an operator you have used!");
+                    Console.WriteLine("Oops... No operation [" + operation + "] defined!");
                     break;
             }
         }
@@ -47,22 +47,22 @@ namespace FoolCompiler.Ast
         {
             List<string> result = new List<string>();
 
-            result.AddRange(left.CheckSemantics(environment));
-            result.AddRange(right.CheckSemantics(environment));
+            result.AddRange(_left.CheckSemantics(environment));
+            result.AddRange(_right.CheckSemantics(environment));
             return result;
         }
 
         public string CodeGeneration()
         {
-            return (left.CodeGeneration() 
-                + right.CodeGeneration() 
-                + operation)
+            return (_left.CodeGeneration() 
+                + _right.CodeGeneration() 
+                + _operation)
                 ;
         }
 
         public IFoolType TypeCheck()
         {
-            if (!(left.TypeCheck().IsSubType(new FoolIntType())) || !(right.TypeCheck().IsSubType(new FoolIntType()))) 
+            if (!(_left.TypeCheck().IsSubType(new FoolIntType())) || !(_right.TypeCheck().IsSubType(new FoolIntType()))) 
             {
                 throw new FoolTypeException("Oops... Incompatible types, Integer type needed!");
             }

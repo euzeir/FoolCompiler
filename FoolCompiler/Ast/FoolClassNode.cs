@@ -12,7 +12,7 @@ namespace FoolCompiler.Ast
         protected string _id;
         protected List<FoolParameterNode> _fieldList;
         protected List<FoolMethodNode> _methodList;
-        private string _superClassId;
+        protected string _superClassId;
         protected FoolClassType _classType;
 
         public FoolClassNode(string id, List<FoolParameterNode> fieldList, List<FoolMethodNode> methodList)
@@ -34,20 +34,23 @@ namespace FoolCompiler.Ast
             List<string> result = new List<string>();
             List<FoolFieldType> symbolTableEntryFieldList = new List<FoolFieldType>();
             List<FoolMethodType> symbolTableEntryMethodList = new List<FoolMethodType>();
-            Dictionary<string, IFoolType> parameterMapping = new Dictionary<string, IFoolType>();
-            Dictionary<string, FoolFunctionType> methodMapping = new Dictionary<string, FoolFunctionType>();
+            Dictionary<string, IFoolType> fieldDictionary = new Dictionary<string, IFoolType>();
+            Dictionary<string, FoolFunctionType> methodDictionary = new Dictionary<string, FoolFunctionType>();
 
-            foreach (FoolParameterNode parameter in _fieldList)
+            //check the fields on the class
+            foreach (FoolParameterNode field in _fieldList)
             {
-                var addToFieldList = new FoolFieldType(parameter.GetId(), parameter.GetFoolType());
+                var addToFieldList = new FoolFieldType(field.GetId(), field.GetFoolType());
                 symbolTableEntryFieldList.Add(addToFieldList);
-                parameterMapping.Add(parameter.GetId(), parameter.GetFoolType());
+                fieldDictionary.Add(field.GetId(), field.GetFoolType());
             }
+            //check the methods on the class
             foreach (FoolMethodNode method in _methodList)
             {
                 List<IFoolType> parameterType = new List<IFoolType>();
-                foreach (FoolParameterNode parameter in method.GetFoolParameterNodes())
+                foreach (FoolParameterNode parameter in method.GetFunctionParameters())
                 {
+                    //check if the method parameters are object types and in this case check if the class is declared
                     if (parameter.GetFoolType() is FoolObjectType)
                     {
                         FoolObjectType parameterObjectType = (FoolObjectType)parameter.GetFoolType();
@@ -58,7 +61,7 @@ namespace FoolCompiler.Ast
                         }
                         catch (NotDeclaredNameErrorException)
                         {
-                            result.Add("Class " + declaredClass + " is not declared!\n");
+                            result.Add("Class " + declaredClass + " has not been declared!\n");
                         }
                     }
                     else
@@ -66,11 +69,11 @@ namespace FoolCompiler.Ast
                         parameterType.Add(parameter.GetFoolType());
                     }
                 }
-                FoolMethodType foolMethodType = new FoolMethodType(method.GetId(), new FoolFunctionType(parameterType, method.GetFoolType()));
-                symbolTableEntryMethodList.Add(foolMethodType);
-                methodMapping.Add(method.GetId(), new FoolFunctionType(parameterType, method.GetFoolType()));
+                symbolTableEntryMethodList.Add(new FoolMethodType(method.GetId(), new FoolFunctionType(parameterType, method.GetFoolType())));
+                methodDictionary.Add(method.GetId(), new FoolFunctionType(parameterType, method.GetFoolType()));
             }
 
+            //check super class is declared in case it has a super class
             FoolClassType superType = null;
             List<string> inheritedMethods = new List<string>();
             if (_superClassId != null)
@@ -78,21 +81,22 @@ namespace FoolCompiler.Ast
                 try
                 {
                     superType = (FoolClassType)environment.CheckDeclaredName(_superClassId).GetFoolType();
-                    foreach (string str in superType.GetMethodsMapping().Keys)
+                    foreach (string superMethodId in superType.GetMethodsMapping().Keys)
                     {
-                        if (!methodMapping.ContainsKey(str))
+                        if (!methodDictionary.ContainsKey(superMethodId))
                         {
-                            inheritedMethods.Add(str);
+                            inheritedMethods.Add(superMethodId);
                         }
                     }
                 }
                 catch (NotDeclaredNameErrorException e)
                 {
-                    result.Add("Superclass " + e + " not declared!\n");
+                    result.Add("Superclass " + e );
                     return result;
                 }
             }
 
+            //update the Symbol Table
             _classType = new FoolClassType(_id, superType, symbolTableEntryFieldList, symbolTableEntryMethodList);
             try
             {
@@ -103,13 +107,14 @@ namespace FoolCompiler.Ast
                 result.Add(e.Message);
             }
 
+            //create a new scope for the method
             environment.InsertNewScope();
 
-            foreach (string str in inheritedMethods)
+            foreach (string inheritedMethod in inheritedMethods)
             {
                 try
                 {
-                    environment.InsertDeclaration(str, superType.GetMethodsMapping()[str], superType.GetMethodsOffsetMapping(str));
+                    environment.InsertDeclaration(inheritedMethod, superType.GetMethodsMapping()[inheritedMethod], superType.GetMethodsOffsetMapping(inheritedMethod));
                 }
                 catch (Exception e)
                 {
@@ -119,28 +124,29 @@ namespace FoolCompiler.Ast
                     }
                 }
             }
-            foreach (FoolMethodNode foolMethodNode in _methodList)
+            foreach (FoolMethodNode method in _methodList)
             {
                 List<IFoolType> foolTypeList = new List<IFoolType>();
-                foreach (FoolParameterNode parameter in foolMethodNode.GetFoolParameterNodes())
+                foreach (FoolParameterNode parameter in method.GetFoolParameterNodes())
                 {
                     foolTypeList.Add(parameter.GetFoolType());
                 }
                 try
                 {
-                    string str = foolMethodNode.GetId();
-                    FoolFunctionType foolFunctionType = new FoolFunctionType(foolTypeList, foolMethodNode.GetFoolType());
-                    int updatedUpdate = environment.GetOffset() + 1;
-                    environment.InsertDeclaration(str, foolFunctionType, updatedUpdate);
+                    string methodId = method.GetId();
+                    FoolFunctionType foolFunctionType = new FoolFunctionType(foolTypeList, method.GetFoolType());
+                    int offsetUpdate = environment.GetOffset() + 1;
+                    environment.InsertDeclaration(methodId, foolFunctionType, offsetUpdate);
                     environment.DecrementOffset();
                 }
                 catch (MultipleNameDeclarationErrorException)
                 {
-                    result.Add("Oops... Method [ " + foolMethodNode.GetId() + " ] is already declared!\n");
+                    result.Add("Oops... Method [ " + method.GetId() + " ] is already declared!\n");
                     return result;
                 }
             }
 
+            //remove the scope
             environment.RemoveScope();
 
             if (_superClassId != null)
@@ -164,24 +170,24 @@ namespace FoolCompiler.Ast
                         FoolFieldType superClassField = superType.GetFieldList()[i];
                         if (!superClassField.GetId().Equals(currentParameter.GetId()) || !superClassField.GetFoolType().GetFoolType().Equals(currentParameter.GetFoolType().GetFoolType()))
                         {
-                            result.Add("Oops... Overriding of the fields are not allowed " + currentParameter.GetId() + " defined in the superclass!\n");
+                            result.Add("Oops... Cannot \" Override \" the fields! " + currentParameter.GetId() + " is defined in the superclass!\n");
                         }
                     }
                 }
                 else
                 {
-                    result.Add("Subclass " + _id + " have different number of parameters from the superclass " + _superClassId + "!\n");
+                    result.Add("Subclass " + _id + " have different number of parameters from the superclass " + _superClassId + "\n");
                 }
                 try
                 {
                     SymbolTableEntry superClasEntry = environment.CheckDeclaredName(_superClassId);
                     Dictionary<string, IFoolType> superClassMethodMap = superType.GetMethodsMapping();
 
-                    foreach (string method in methodMapping.Keys)
+                    foreach (string method in methodDictionary.Keys)
                     {
                         if (superClassMethodMap.ContainsKey(method))
                         {
-                            if (!methodMapping[method].IsSubType(superClassMethodMap[method]))
+                            if (!methodDictionary[method].IsSubType(superClassMethodMap[method]))
                             {
                                 result.Add("Override of" + method + " in class " + _id + " is not allowed!\n");
                             }
@@ -211,9 +217,9 @@ namespace FoolCompiler.Ast
                 dispatchTable = new List<FoolDispatchTableEntry>();
             }
 
-            foreach (FoolDispatchTableEntry dTE in dispatchTable)
+            foreach (FoolDispatchTableEntry dispatchTableEntry in dispatchTable)
             {
-                superClassMethodsMapping.Add(dTE.GetMethodId(), dTE.GetMethodLabel());
+                superClassMethodsMapping.Add(dispatchTableEntry.GetMethodId(), dispatchTableEntry.GetMethodLabel());
             }
 
             foreach (FoolMethodNode method in _methodList)
@@ -223,21 +229,22 @@ namespace FoolCompiler.Ast
 
             for (int i = 0; i < dispatchTable.Count; i++)
             {
-                string OldMethodName = dispatchTable[i].GetMethodId();
-                string NewMethodName = currentClassMethodsMapping[OldMethodName];
-                if (NewMethodName != null)
+                string oldMethodName = dispatchTable[i].GetMethodId();
+                string newMethodName = currentClassMethodsMapping[oldMethodName];
+                if (newMethodName != null)
                 {
-                    dispatchTable[i] = new FoolDispatchTableEntry(OldMethodName, NewMethodName);
+                    dispatchTable[i] = new FoolDispatchTableEntry(oldMethodName, newMethodName);
                 }
             }
             foreach (FoolMethodNode method in _methodList)
             {
                 string currentMethodId = method.GetId();
-                if (superClassMethodsMapping[currentMethodId] == null)
+                if (!superClassMethodsMapping.ContainsKey(currentMethodId))
                 {
                     dispatchTable.Add(new FoolDispatchTableEntry(currentMethodId, currentClassMethodsMapping[currentMethodId]));
                 }
             }
+            FoolDispatchTable.AddDispatchTable(_id, dispatchTable);
             return string.Empty;
         }
 
@@ -245,9 +252,9 @@ namespace FoolCompiler.Ast
         {
             try
             {
-                foreach (FoolParameterNode parameter in _fieldList)
+                foreach (FoolParameterNode field in _fieldList)
                 {
-                    parameter.TypeCheck();
+                    field.TypeCheck();
                 }
                 foreach (FoolMethodNode method in _methodList)
                 {
@@ -261,6 +268,7 @@ namespace FoolCompiler.Ast
             return _classType;
         }
 
+        //helper methods
         public List<string> CheckMethods(FoolEnvironment environment)
         {
             List<string> result = new List<string>();

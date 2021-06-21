@@ -1,0 +1,12 @@
+﻿class Animal(int creature){
+    int getAnimal() {
+        creature;
+    }
+};
+
+let
+    Animal dog = new Animal(5);
+in
+    dog.getAnimal();
+
+// 5

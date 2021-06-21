@@ -19,9 +19,10 @@ namespace FoolCompiler.Ast
             _parameterList = argumentList;
         }
 
-        public List<string> CheckSemantics(FoolEnvironment environment)
+        public virtual List<string> CheckSemantics(FoolEnvironment environment)
         {
             List<string> result = new List<string>();
+            _nestingLevel = environment.GetNestingLevel();
 
             try
             {
@@ -31,20 +32,20 @@ namespace FoolCompiler.Ast
             {
                 result.Add("Oops... Function" + "[" + _id + "()]" + " is not declared\n");
             }
-            _nestingLevel = environment.GetNestingLevel();
 
-            foreach (IFoolNode arguments in _parameterList)
+            foreach (IFoolNode argument in _parameterList)
             {
-                result.AddRange(arguments.CheckSemantics(environment));
+                result.AddRange(argument.CheckSemantics(environment));
             }
             return result;
         }
 
-        public string CodeGeneration()
+        public virtual string CodeGeneration()
         {
             StringBuilder parameterCodeGeneration = new StringBuilder();
-            StringBuilder GetAR = new StringBuilder();
+            StringBuilder getActivationRecord = new StringBuilder();
 
+            //parameters are always considered in reverse order
             for (int i = _parameterList.Count - 1; i >= 0; i--)
             {
                 parameterCodeGeneration.Append(_parameterList[i].CodeGeneration());
@@ -52,21 +53,21 @@ namespace FoolCompiler.Ast
 
             if (_nestingLevel - _symbolTableEntry.GetNestingLevel() > 0)
             {
-                GetAR.Append("lfp\n");
+                getActivationRecord.Append("lfp\n");
                 for (int j = 0; j < _nestingLevel - _symbolTableEntry.GetNestingLevel(); j++)
                 {
-                    GetAR.Append("lw\n");
+                    getActivationRecord.Append("lw\n");
                 }
-                GetAR.Append("sfp\n");
+                getActivationRecord.Append("sfp\n");
             }
             else
             {
-                GetAR.Append(string.Empty);
+                getActivationRecord.Append(string.Empty);
             }
 
             return "lfp\n" 
                 + parameterCodeGeneration 
-                + GetAR 
+                + getActivationRecord 
                 + "lfp\n" 
                 + "push " 
                 + _symbolTableEntry.GetOffset()
@@ -79,7 +80,7 @@ namespace FoolCompiler.Ast
             }
 
 
-        public IFoolType TypeCheck()
+        public virtual IFoolType TypeCheck()
         {
             FoolFunctionType functionType = null;
 

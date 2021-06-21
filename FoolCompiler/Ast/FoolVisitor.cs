@@ -41,14 +41,13 @@ namespace FoolCompiler.Ast
         public override IFoolNode VisitClassExp(ClassExpContext context)
         {
             List<FoolClassNode> classExpList = new List<FoolClassNode>();
-            List<IFoolNode> letDeclaration = new List<IFoolNode>();
-            IFoolNode letIn;
 
             foreach (ClassdecContext cdc in context.classdec())
             {
                 classExpList.Add((FoolClassNode) Visit(cdc));
             }
 
+            List<IFoolNode> letDeclaration = new List<IFoolNode>();
             if (context.let() != null)
             {
                 foreach (DecContext decContext in context.let().dec())
@@ -56,7 +55,8 @@ namespace FoolCompiler.Ast
                     letDeclaration.Add(Visit(decContext));
                 }
             }
-            
+
+            IFoolNode letIn;
             if (context.exp() != null)
             {
                 letIn = new FoolProgramLetInExpressionNode(letDeclaration, Visit(context.exp()));
@@ -114,12 +114,13 @@ namespace FoolCompiler.Ast
         public override IFoolNode VisitMet(MetContext context)
         {
             List<FoolParameterNode> parameterNodes = new List<FoolParameterNode>();
-            List<IFoolNode> nestedDec = new List<IFoolNode>();
-            List<IFoolNode> expressionOrStatement = new List<IFoolNode>();
-            IFoolType type;
-
+            
             try
             {
+                List<IFoolNode> nestedDec = new List<IFoolNode>();
+                List<IFoolNode> expressionOrStatement = new List<IFoolNode>();
+                IFoolType type;
+
                 for (int i = 0; i < context.fun().vardec().Length; i++)
                 {
                     VardecContext vardecContext = context.fun().vardec()[i];
@@ -329,14 +330,15 @@ namespace FoolCompiler.Ast
 
         public override IFoolNode VisitBoolVal(BoolValContext context)
         {
-            bool flag;
             if (context.NOT() != null)
             {
-                return new FoolBooleanNode(!Boolean.TryParse(context.GetText(), out flag));
+                bool flag;
+                return new FoolBooleanNode(!bool.TryParse(context.GetText().ToLower(), out flag));
             }
             else
             {
-                return new FoolBooleanNode(Boolean.TryParse(context.GetText(), out flag));
+                bool flag;
+                return new FoolBooleanNode(bool.TryParse(context.GetText().ToLower(), out flag));
             }
         }
 

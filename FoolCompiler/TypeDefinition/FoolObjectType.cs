@@ -49,7 +49,7 @@ namespace FoolCompiler.TypeDefinition
             {
                 try
                 {
-                    throw new NotDeclaredNameErrorException(_foolClassType.GetFoolClassName());
+                    throw new NotDeclaredNameErrorException(_foolClassType.GetFoolClassName() + " " + e);
                 }
                 catch (NotDeclaredNameErrorException ee)
                 {

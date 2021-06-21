@@ -8,22 +8,22 @@ namespace FoolCompiler.Ast
 {
     public class FoolLogicalOperationsNode : IFoolNode
     {
-        private IFoolNode left;
-        private IFoolNode right;
-        private int operation;
+        private IFoolNode _left;
+        private IFoolNode _right;
+        private int _operation;
 
-        public FoolLogicalOperationsNode(int op, IFoolNode l, IFoolNode r)
+        public FoolLogicalOperationsNode(int operation, IFoolNode left, IFoolNode right)
         {
-            right = r;
-            left = l;
-            operation = op;
+            _right = right;
+            _left = left;
+            _operation = operation;
         }
         public List<string> CheckSemantics(FoolEnvironment environment)
         {
             List<string> result = new List<string>();
 
-            result.AddRange(left.CheckSemantics(environment));
-            result.AddRange(right.CheckSemantics(environment));
+            result.AddRange(_left.CheckSemantics(environment));
+            result.AddRange(_right.CheckSemantics(environment));
             return result;
         }
 
@@ -32,15 +32,15 @@ namespace FoolCompiler.Ast
             string label = FoolLib.CreateFreshLabel();
             string exit = FoolLib.CreateFreshLabel();
 
-            switch (operation)
+            switch (_operation)
             {
                 case FOOLLexer.AND:
-                    return (left.CodeGeneration()
+                    return (_left.CodeGeneration()
                         + "push 0\n"
                         + "beq "
                         + label
                         + "\n"
-                        + right.CodeGeneration()
+                        + _right.CodeGeneration()
                         + "push 0\n"
                         + "beq "
                         + label
@@ -56,12 +56,12 @@ namespace FoolCompiler.Ast
                         + ":\n")
                         ;
                 case FOOLLexer.OR:
-                    return (left.CodeGeneration()
+                    return (_left.CodeGeneration()
                         + "push 1\n"
                         + "beq "
                         + label
                         + "\n"
-                        + right.CodeGeneration()
+                        + _right.CodeGeneration()
                         + "push 1\n"
                         + "beq "
                         + label
@@ -77,8 +77,8 @@ namespace FoolCompiler.Ast
                         + ":\n")
                         ;
                 case FOOLLexer.EQ:
-                    return (left.CodeGeneration()
-                        + right.CodeGeneration()
+                    return (_left.CodeGeneration()
+                        + _right.CodeGeneration()
                         + "beq "
                         + label
                         + "\n"
@@ -93,10 +93,10 @@ namespace FoolCompiler.Ast
                         + ":\n")
                         ;
                 case FOOLLexer.LESSERTHAN:
-                    return left.CodeGeneration()
+                    return _left.CodeGeneration()
                         + "push 1\n"
                         + "add\n"
-                        + right.CodeGeneration()
+                        + _right.CodeGeneration()
                         + "bleq "
                         + label
                         + "\n"
@@ -111,8 +111,8 @@ namespace FoolCompiler.Ast
                         + ":\n"
                         ;
                 case FOOLLexer.GREATEREQUAL:
-                    return right.CodeGeneration()
-                        + left.CodeGeneration()
+                    return _right.CodeGeneration()
+                        + _left.CodeGeneration()
                         + "bleq "
                         + label
                         + "\n"
@@ -127,10 +127,10 @@ namespace FoolCompiler.Ast
                         + ":\n"
                         ;
                 case FOOLLexer.GREATERTHAN:
-                    return right.CodeGeneration()
+                    return _right.CodeGeneration()
                         + "push 1\n"
                         + "add\n"
-                        + left.CodeGeneration()
+                        + _left.CodeGeneration()
                         + "bleq "
                         + label
                         + "\n"
@@ -145,8 +145,8 @@ namespace FoolCompiler.Ast
                         + ":\n"
                         ;
                 case FOOLLexer.LESSEREQUAL:
-                    return left.CodeGeneration()
-                        + right.CodeGeneration()
+                    return _left.CodeGeneration()
+                        + _right.CodeGeneration()
                         + "bleq "
                         + label
                         + "\n"
@@ -167,10 +167,10 @@ namespace FoolCompiler.Ast
 
         public IFoolType TypeCheck()
         {
-            IFoolType leftType = left.TypeCheck();
-            IFoolType rightType = right.TypeCheck();
+            IFoolType leftType = _left.TypeCheck();
+            IFoolType rightType = _right.TypeCheck();
 
-            if (operation == FOOLLexer.AND || operation == FOOLLexer.OR)
+            if (_operation == FOOLLexer.AND || _operation == FOOLLexer.OR)
             {
                 if (!(leftType.IsSubType(new FoolBooleanType())) || !(rightType.IsSubType(new FoolBooleanType())))
                 {

@@ -121,20 +121,17 @@ namespace FoolCompiler.TypeDefinition
 
         public int GetMethodsOffsetMapping(string methodName)
         {
-            Dictionary<string, int> methodsMapping = new Dictionary<string, int>();
-            var offset = methodsMapping[methodName];
-            try
+            Dictionary<string, int> methodsMapping = SuperClassMethodsMappint();
+            int? offset = methodsMapping[methodName];
+
+            if (offset != null)
             {
-                if (offset != 0)
-                {
-                    return offset++;
-                }
+                return (int)offset + 1;
             }
-            catch
+            else
             {
                 throw new NotDeclaredNameErrorException(methodName);
             }
-            return offset;
         }
 
         public Dictionary<string, int> SuperClassMethodsMappint()

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using FoolCompiler.ExceptionHandling;
 using FoolCompiler.TypeDefinition;
 using FoolCompiler.Utils;
@@ -27,17 +28,20 @@ namespace FoolCompiler.Ast
 
                 foreach (FoolMethodNode methodNode in classNode.GetMethodList())
                 {
-                    methods.Add(new FoolMethodType(methodNode.GetId(), new FoolFunctionType(new List<IFoolType>(), methodNode.GetFoolType())));
+                    string metId = methodNode.GetId();
+                    IFoolType metType = new FoolFunctionType(new List<IFoolType>(), methodNode.GetFoolType());
+                    methods.Add(new FoolMethodType(metId, metType));
                 }
-                FoolClassType classType = new FoolClassType(classNode.GetId(), new FoolClassType(classNode.GetSuperClassId()), fields, methods);
+                string clsId = classNode.GetId();
+                FoolClassType classType = new FoolClassType(clsId, new FoolClassType(classNode.GetSuperClassId()), fields, methods);
 
                 try
                 {
-                    environment.InsertDeclaration(classNode.GetId(), classType, 0);
+                    environment.InsertDeclaration(clsId, classType, 0);
                 }
                 catch (MultipleNameDeclarationErrorException) 
                 {
-                    result.Add("Oops... Class [ " + classNode.GetId() + " ] is already declared!\n");
+                    result.Add("Oops... Class [ " + classNode.GetId() + " ] is already declared!");
                 }
             }
             foreach (FoolClassNode classNode in _classNodeDeclarations)
@@ -60,33 +64,50 @@ namespace FoolCompiler.Ast
             Dictionary<string, FoolClassNode> classMapping = new Dictionary<string, FoolClassNode>();
             string nameDeclaration = string.Empty;
 
-            var index = _classNodeDeclarations.Count;
-            for (int i = 1; i <= index; i++)
+            IEnumerator<FoolClassNode> enumerator = _classNodeDeclarations.GetEnumerator();
+            int i = 0;
+            while (enumerator.MoveNext())
             {
-                if (_classNodeDeclarations[i + 1] != null)
+                
+                FoolClassNode classDeclaration = (FoolClassNode)enumerator.Current;
+                if (string.IsNullOrEmpty(classDeclaration.GetSuperClassId()))
                 {
-                    FoolClassNode classDeclaration = (FoolClassNode)_classNodeDeclarations[i + 1];
-                   // if (classDeclaration.GetSuperClassId() == null || classDeclaration.GetSuperClassId() == string.Empty) ;
-                    if (string.IsNullOrEmpty(classDeclaration.GetSuperClassId()))
+                    i++;
+                    classNode.Add(classDeclaration);
+                    classMapping.Add(classDeclaration.GetId(), classDeclaration);
+                    if (i < _classNodeDeclarations.Count)
                     {
-                        classNode.Add(classDeclaration);
-                        classMapping.Add(classDeclaration.GetId(), classDeclaration);
+                       _classNodeDeclarations.Remove(enumerator.Current);
+                    }
+                    if (i == _classNodeDeclarations.Count)
+                    {
+                        _classNodeDeclarations.Remove(enumerator.Current);
+                        break;
                     }
                 }
             }
             while (_classNodeDeclarations.Count != 0)
             {
-                for (int i = 1; i <= index; i++)
+                int j = 0;
+                j++;
+                enumerator = _classNodeDeclarations.GetEnumerator();
+                while (enumerator.MoveNext())
                 {
-                    if (_classNodeDeclarations[i + 1] != null)
+                    FoolClassNode subClass = (FoolClassNode) enumerator.Current;
+                    string superClassName = subClass.GetSuperClassId();
+                    FoolClassNode superClass = classMapping[superClassName];
+                    if (superClass != null)
                     {
-                        FoolClassNode subClass = (FoolClassNode) _classNodeDeclarations[i + 1];
-                        string superClassName = subClass.GetSuperClassId();
-                        FoolClassNode superClass = classMapping[superClassName];
-                        if (superClass != null)
+                        classNode.Add(subClass);
+                        classMapping.Add(subClass.GetId(), subClass);
+                        if (i < _classNodeDeclarations.Count)
+                            {
+                                _classNodeDeclarations.Remove(enumerator.Current);
+                            }
+                        if (j == _classNodeDeclarations.Count)
                         {
-                            classNode.Add(subClass);
-                            classMapping.Add(subClass.GetId(), subClass);
+                            _classNodeDeclarations.Remove(enumerator.Current);
+                            break;
                         }
                     }
                 }
@@ -102,10 +123,18 @@ namespace FoolCompiler.Ast
 
         public IFoolType TypeCheck()
         {
-            foreach (FoolClassNode classNode in _classNodeDeclarations)
+            try
             {
-                classNode.TypeCheck();
+                foreach (FoolClassNode classNode in _classNodeDeclarations)
+                {
+                    classNode.TypeCheck();
+                }
             }
+            catch
+            {
+                throw new FoolTypeException("Oops... TypeChecking error!");
+            }
+
             return _expressionOrStatements.TypeCheck();
         }
     }

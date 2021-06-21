@@ -62,11 +62,6 @@ namespace FoolCompiler.Ast
                     result.Add(e.Message);
                     Console.BackgroundColor = ConsoleColor.Red;
                     Console.WriteLine("Error: " + e.Message);
-                    //Console.BackgroundColor = ConsoleColor.Black;
-                    //Console.WriteLine("*****************************");
-                    //Console.WriteLine("Press any key to terminate...");
-                    //Console.ReadKey();
-                    //Environment.Exit(-1);
                 }
             }
             return result;
@@ -85,7 +80,7 @@ namespace FoolCompiler.Ast
             }
             if (!_expression.TypeCheck().IsSubType(_type))
             {
-                throw new FoolTypeException("Oops... Incompatible value for variable [ " + _id + " ]\n");
+                throw new FoolTypeException("Oops... Variable [ " + _id + " ] has a Wrong or Incompatible value\n");
             }
             return _type;
         }

@@ -20,11 +20,11 @@ namespace FoolCompiler.Ast
             _iid = id;
         }
 
-        new public List<string> CheckSemantics(FoolEnvironment environment)
+        public override List<string> CheckSemantics(FoolEnvironment environment)
         {
             List<string> result = new List<string>();
 
-            _nestingLevel = environment.GetNestingLevel();
+            this._nestingLevel = environment.GetNestingLevel();
             FoolClassType classType = null;
             IFoolType objectType;
 
@@ -47,7 +47,7 @@ namespace FoolCompiler.Ast
                     
                     if (!objectEntry.IsInitialized())
                     {
-                        Console.WriteLine("The object is not initialized!\nExit.");
+                        Console.WriteLine("Oops... The object is not initialized!\nExit.");
                         Environment.Exit(-1);
                     }
                     objectType = objectEntry.GetFoolType();
@@ -57,7 +57,7 @@ namespace FoolCompiler.Ast
                     try
                     {
                         environment.CheckDeclaredName("this");
-                        _nestingLevel--;
+                        this._nestingLevel--;
                     }
                     catch (NotDeclaredNameErrorException e)
                     {
@@ -69,7 +69,7 @@ namespace FoolCompiler.Ast
                     }
                     else
                     {
-                        result.Add("The method " + _iid + " is invoked from a " + "type that is not an Object\n");
+                        result.Add("Oops... The method " + _id + " is invoked from a " + " NON Object type!\n");
                         return result;
                     }
                 }
@@ -111,22 +111,22 @@ namespace FoolCompiler.Ast
             }
             else
             {
-                result.Add("The object " + _iid + " doesn't have a method" + " name" + _id + "\n");
+                result.Add("Oops... There is no method named " + _id + "for the object" + _iid + "\n");
             }
             return result;
         }
 
-        new public string CodeGeneration()
+        public override string CodeGeneration()
         {
             StringBuilder parameterCodeGeneration = new StringBuilder();
-            StringBuilder GetAR = new StringBuilder();
-            for (int i = _parameterList.Count; i >= 0; i--)
+            StringBuilder getActivationRecord = new StringBuilder();
+            for (int i = _parameterList.Count - 1; i >= 0; i--)
             {
                 parameterCodeGeneration.Append(_parameterList[i].CodeGeneration());
             }
             for (int i = 0; i < _nestingLevel - _objectNestingLevel; i++)
             {
-                GetAR.Append("lw\n");
+                getActivationRecord.Append("lw\n");
             }
 
             return "lfp\n"
@@ -135,7 +135,7 @@ namespace FoolCompiler.Ast
                 + _objectOffset
                 + "\n"
                 + "lfp\n"
-                + GetAR
+                + getActivationRecord
                 + "add\n"
                 + "lw\n"
                 + "cts\n"
@@ -149,25 +149,25 @@ namespace FoolCompiler.Ast
                 ;
         }
 
-        new public IFoolType TypeCheck()
+        public override IFoolType TypeCheck()
         {
             FoolFunctionType returnType = (FoolFunctionType)_methodType;
             List<IFoolType> parameterTypes = returnType.GetParameters();
 
             if (parameterTypes.Count != _parameterList.Count)
             {
-                throw new FoolTypeException("Oops... Wrong number of arguments for " + " method " + _id + " invocation\n");
+                throw new FoolTypeException("Oops... Invocation of method " + _id + " with wrong number of arguments\n");
             }
 
             for (int i = 0; i < _parameterList.Count; i++)
             {
                 if (_parameterList[i].TypeCheck() is FoolObjectType && (!((FoolIdNode)_parameterList[i]).GetEntry().IsInitialized()))
                 {
-                    throw new FoolTypeException("Oops... The parameter " + ((FoolIdNode)_parameterList[i]).GetIdName() + " is not initialized!\n");
+                    throw new FoolTypeException("Oops... Parameter " + ((FoolIdNode)_parameterList[i]).GetIdName() + " is not initialized!\n");
                 }
                 if (!_parameterList[i].TypeCheck().IsSubType(parameterTypes[i]))
                 {
-                    throw new FoolTypeException("The parameter " + ((FoolIdNode)_parameterList[i]).GetIdName() + " inside the invocation of the method " + _id + "\n");
+                    throw new FoolTypeException("The parameter " + ((FoolIdNode)_parameterList[i]).GetIdName() + " inside the invocation of the method " + _id + " has not the correct type\n");
                 }
             }
             return returnType.GetReturnType();

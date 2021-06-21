@@ -24,8 +24,7 @@ namespace FoolCompiler.CodeGeneration
         public static string CodeGenerationOfDispatchTable()
         {
             StringBuilder sB = new StringBuilder();
-            //foreach (KeyValuePair<string, List<FoolDispatchTableEntry>> dt in _dispatchTables)
-                foreach (var dt in _dispatchTables)
+            foreach (var dt in _dispatchTables)
             {
                 sB.Append("class" + dt.Key + ":\n");
                 foreach (var entry in _dispatchTables[dt.Key])

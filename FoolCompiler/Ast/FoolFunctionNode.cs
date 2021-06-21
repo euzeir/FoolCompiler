@@ -23,7 +23,9 @@ namespace FoolCompiler.Ast
             _declarationList = declarationList;
             _statementExpressions = statementExpressions;
         }
-        public List<string> CheckSemantics(FoolEnvironment environment)
+
+        //methods are 'virtual' because FoolFunctionNode is the super class of FoolMethodNode that overrides them
+        public virtual List<string> CheckSemantics(FoolEnvironment environment)
         {
             List<string> result = new List<string>();
             List<IFoolType> parameters = new List<IFoolType>();
@@ -37,47 +39,53 @@ namespace FoolCompiler.Ast
                 FoolObjectType objectType = (FoolObjectType)_foolType;
                 result.AddRange(objectType.UpdateFoolClassType(environment));
             }
+
             environment.InsertNewScope();
+
             foreach (FoolParameterNode parameter in _parameterList)
             {
                 result.AddRange(parameter.CheckSemantics(environment));
             }
+
+            //check local variable declarations in the function body
             if (_declarationList.Count > 0)
             {
                 environment.SetOffsetValue(-2);
-                foreach (IFoolNode foolNode in _declarationList)
+                foreach (IFoolNode declaration in _declarationList)
                 {
-                    result.AddRange(foolNode.CheckSemantics(environment));
+                    result.AddRange(declaration.CheckSemantics(environment));
                 }
             }
-            foreach (IFoolNode foolNode in _statementExpressions)
+
+            foreach (IFoolNode statement in _statementExpressions)
             {
-                result.AddRange(foolNode.CheckSemantics(environment));
+                result.AddRange(statement.CheckSemantics(environment));
             }
+
             environment.RemoveScope();
             return result;
         }
 
-        public string CodeGeneration()
+        public virtual string CodeGeneration()
         {
             string functionLable = FoolLib.CreateFreshFunctionLabel();
-            StringBuilder declCode = new StringBuilder();
-            StringBuilder popDecl = new StringBuilder();
-            StringBuilder popParl = new StringBuilder();
-            StringBuilder stmsExpCode = new StringBuilder();
+            StringBuilder declarationCode = new StringBuilder();
+            StringBuilder popDeclarationList = new StringBuilder();
+            StringBuilder popParameterList = new StringBuilder();
+            StringBuilder statementExpressionCode = new StringBuilder();
 
             foreach (IFoolNode declaration in _declarationList)
             {
-                declCode.Append(declaration.CodeGeneration());
-                popDecl.Append("pop\n");
+                declarationCode.Append(declaration.CodeGeneration());
+                popDeclarationList.Append("pop\n");
             }
             foreach (IFoolNode parameter in _parameterList)
             {
-                popParl.Append("pop\n");
+                popParameterList.Append("pop\n");
             }
             foreach (IFoolNode statement in _statementExpressions)
             {
-                stmsExpCode.Append(statement.CodeGeneration());
+                statementExpressionCode.Append(statement.CodeGeneration());
             }
 
             FoolLib.PutCode(
@@ -85,12 +93,12 @@ namespace FoolCompiler.Ast
                 + ":\n" 
                 + "cfp\n"
                 + "lra\n" 
-                + declCode 
-                + stmsExpCode 
+                + declarationCode 
+                + statementExpressionCode 
                 + "srv\n" 
-                + popDecl 
+                + popDeclarationList 
                 + "sra\n" 
-                + popParl 
+                + popParameterList 
                 + "pop\n" 
                 + "sfp\n" 
                 + "lrv\n" 
@@ -101,7 +109,7 @@ namespace FoolCompiler.Ast
             return "push " + functionLable + "\n";
         }
 
-        public IFoolType TypeCheck()
+        public virtual IFoolType TypeCheck()
         {
             List<IFoolType> parameterTypeList = new List<IFoolType>();
             foreach (FoolParameterNode parameter in _parameterList)
@@ -146,6 +154,11 @@ namespace FoolCompiler.Ast
         public IFoolType GetFoolType()
         {
             return _foolType;
+        }
+
+        public List<FoolParameterNode> GetFoolParameterNodes()
+        {
+            return _parameterList;
         }
     }
 }

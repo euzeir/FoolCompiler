@@ -16,8 +16,8 @@ namespace FoolCompiler.Ast
         public FoolProgramLetInExpressionNode(List<IFoolNode> declarationList, List<IFoolNode> statements)
         {
             _declarationList = declarationList;
-            _statements = statements;
             _expression = null;
+            _statements = statements; 
         }
 
         public FoolProgramLetInExpressionNode(List<IFoolNode> declarationList, IFoolNode toVisit)

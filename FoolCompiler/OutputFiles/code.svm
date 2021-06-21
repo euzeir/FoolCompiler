@@ -1,6 +1,6 @@
+push function0
 push function1
 push function2
-push function3
 lfp
 push 20
 lfp
@@ -12,16 +12,16 @@ js
 print
 halt
 
-function1:
+function0:
 cfp
 lra
+push 1
+push 1
+add
 push 1
 lfp
 add
 lw
-push 1
-add
-push 1
 bleq label2
 push 0
 b label3
@@ -50,6 +50,8 @@ b label1
 label0:
 lfp
 push 5
+push 4
+add
 lfp
 lw
 sfp
@@ -69,7 +71,7 @@ lrv
 lra
 js
 
-function2:
+function1:
 cfp
 lra
 lfp
@@ -95,13 +97,18 @@ lrv
 lra
 js
 
-function3:
+function2:
 cfp
 lra
 push 1
 lfp
 add
 lw
+push 1
+lfp
+add
+lw
+mult
 srv
 sra
 pop

@@ -19,12 +19,8 @@ namespace FoolCompiler.Ast
         {
             _className = className;
         }
-        public List<FoolParameterNode> GetFoolParameterNodes()
-        {
-            return _parameterList;
-        }
         
-        new public List<string> CheckSemantics(FoolEnvironment environment)
+        public override List<string> CheckSemantics(FoolEnvironment environment)
         {
             List<string> result = new List<string>();
             List<IFoolType> parameterTypeList = new List<IFoolType>();
@@ -48,7 +44,7 @@ namespace FoolCompiler.Ast
             {
                 if (e is NotDeclaredNameErrorException || e is MultipleNameDeclarationErrorException)
                 {
-                    Console.WriteLine("Oops! The name is not declared or is declared multiple times. {0}", e.Message);
+                    Console.WriteLine("Oops... The name is not declared or is declared multiple times. {0}", e.Message);
                 }
             }
             foreach (FoolParameterNode paremeter in _parameterList)
@@ -71,12 +67,12 @@ namespace FoolCompiler.Ast
             return result;
         }
 
-        new public IFoolType TypeCheck()
+        public override IFoolType TypeCheck()
         {
             return base.TypeCheck();
         }
 
-        new public string CodeGeneration()
+        public override string CodeGeneration()
         {
             StringBuilder addLocal = new StringBuilder();
             StringBuilder popLocal = new StringBuilder();

@@ -8,20 +8,21 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using System.Configuration;
 
 namespace FoolCompiler
 {
     class Program
-    {
-        //public string consoleInput;
-        
+    {   
         static void Main(string[] args)
          {
             try
             {
+                string inputFilePath = ConfigurationManager.AppSettings.Get("inputFilePath");
+                string outputFilePath = ConfigurationManager.AppSettings.Get("outputFilePath");
                 SelectInputFile sip = new SelectInputFile();
                 var com = sip.Start();
-                string fileName = @"C:\Users\Newton\source\repos\FoolCompiler\FoolCompiler\InputFiles\" + com + ".fool";
+                string fileName = inputFilePath + com + ".fool";
                 ICharStream input = CharStreams.fromPath(fileName);
 
                 //LEXER
@@ -42,7 +43,7 @@ namespace FoolCompiler
                 FOOLParser parser = new FOOLParser(tokens);
                 FOOLParser.ProgContext progContext = parser.prog();
                 if (parser.NumberOfSyntaxErrors > 0)
-                    throw new FoolParserException("Errori rilevati: " + parser.NumberOfSyntaxErrors + "\n");
+                    throw new FoolParserException("Errors: " + parser.NumberOfSyntaxErrors + "\n");
                 Console.WriteLine("\nOK, DONE!");
                 Console.WriteLine("*****************************");
                 //SEMANTIC
@@ -56,24 +57,22 @@ namespace FoolCompiler
                 Console.WriteLine("*****************************");
                 //TYPE CHECKING
                 Console.WriteLine("[<<<<< TYPE CHECKING >>>>>]");
-                IFoolType type = ast.TypeCheck(); //type-checking bottom-up
+                IFoolType type = ast.TypeCheck();
                 Console.WriteLine("Type checking: " + type.GetFoolType().ToUpper());
                 Console.WriteLine("\nOK, DONE!");
                 Console.WriteLine("*****************************");
                 //CODE GENERATION
-                Console.WriteLine("[<<<<< CODE GEN >>>>>]");
+                Console.WriteLine("[<<<<< CODE GENERATION >>>>>]");
                 string code = ast.CodeGeneration();
                 code += "\n" + FoolDispatchTable.CodeGenerationOfDispatchTable();
 
-                string path = @"C:\Users\Newton\source\repos\FoolCompiler\FoolCompiler\OutputFiles\code.svm";
-
-                if (File.Exists(path))
+                if (File.Exists(outputFilePath))
                 {
-                    File.Delete(path);
+                    File.Delete(outputFilePath);
                 }
-                if (!File.Exists(path))
+                if (!File.Exists(outputFilePath))
                 {
-                    using (FileStream fs = File.Create(path))
+                    using (FileStream fs = File.Create(outputFilePath))
                     {
                         Byte[] data = new UTF8Encoding(true).GetBytes(code);
                         fs.Write(data);
@@ -84,7 +83,7 @@ namespace FoolCompiler
                 {
                     AddPrintCodeGeneration();
                 }
-                ICharStream inputASM = CharStreams.fromPath(path);
+                ICharStream inputASM = CharStreams.fromPath(outputFilePath);
                 SVMLexer lexerASM = new SVMLexer(inputASM);
                 CommonTokenStream tokensASM = new CommonTokenStream(lexerASM);
                 SVMParser parserASM = new SVMParser(tokensASM);
@@ -175,7 +174,7 @@ namespace FoolCompiler
         {
             try
             {
-                string path = @"C:\Users\Newton\source\repos\FoolCompiler\FoolCompiler\OutputFiles\code.svm";
+                string path = ConfigurationManager.AppSettings.Get("outputFilePath");
                 string line;
                 List<string> lines = new List<string>();
 
